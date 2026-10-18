@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What’s a little undocumented behavior between friends? | Arbee&#x27;s WIP Emporium</title>
+<meta name="description" content="(NOTE: this post will get very technical. Some knowledge of 16-bit x86 assembly will help).">
+<link rel="canonical" href="https://rb6502.github.io/2026/05/09/whats-a-little-undocumented-behavior-between-friends/">
+<link rel="alternate" type="application/atom+xml" title="Arbee’s WIP Emporium" href="/feed.xml">
+<link rel="stylesheet" href="/style.css">
+<meta property="og:site_name" content="Arbee’s WIP Emporium">
+<meta property="og:title" content="What’s a little undocumented behavior between friends?">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://rb6502.github.io/2026/05/09/whats-a-little-undocumented-behavior-between-friends/">
+<meta property="og:description" content="(NOTE: this post will get very technical. Some knowledge of 16-bit x86 assembly will help).">
+</head>
+<body>
+<header class="masthead">
+  <a href="/" class="masthead-link"><img src="/images/wipheader.png" alt="Arbee’s WIP Emporium" width="640" height="120"></a>
+  <p class="tagline">This page will include WIP screenshots and other fun stuff for MAME™, M1, and whatever else I’m working on.</p>
+</header>
+<div class="layout">
+  <main class="main">
+<article class="post">
+  <header class="post-header">
+    <p class="post-date"><time datetime="2026-05-09T15:51:00-04:00">May 9, 2026</time></p>
+    <h1 class="post-title">What’s a little undocumented behavior between friends?</h1>
+  </header>
+  <div class="post-body">
+<p>(NOTE: this post will get very technical.  Some knowledge of 16-bit x86 assembly will help).</p>
+<p>From the <a href="https://en.wikipedia.org/wiki/Akai_MPC">MPC60</a> code that computes the duration of a note in timer ticks:</p>
+<pre><code>seg000:5659                 sub     dx, dx
+seg000:565B                 mov     cx, 0Ah
+seg000:565E                 div     cx
+seg000:5660                 jnz     short loc_5665
+seg000:5662                 mov     ax, 1
+seg000:5665
+seg000:5665 loc_5665:
+seg000:5665                 mov     bx, ax
+</code></pre>
+<p>This was falling through the JNZ and giving a result of 1 every time, which doesn&rsquo;t sound very good (the timer rate was around 290 Hz in this case, but it seems to depend on the current sequencer tempo).  What influences the JNZ?  It&rsquo;s like this:</p>
+<ol>
+<li>SUB DX, DX zeros out DX and sets the zero flag</li>
+<li>MOV CX, 0Ah loads CX and doesn&rsquo;t affect any flags</li>
+<li>DIV CX does a division and is documented by Intel to have undefined effects on the zero flag.  MAME i86.cpp expresses this as doing nothing to the flag, but we could also validly have set it to a random value according to that documentation.</li>
+</ol>
+<p>So the zero flag was always set, and the JNZ always fell through, turning every sample into a short click.</p>
+<p>It turns out that in the 80s it was known by some that the zero flag was set according to the quotient, so it&rsquo;s cleared if the quotient isn&rsquo;t 0.  Roger Linn was apparently one of the people who knew, because it&rsquo;s used multiple places in the MPC60 firmware.</p>
+<p>But now that <a href="https://righto.com/">Ken Shirriff</a> has dumped the 8086 and 8088 microcode, and you can run the microcode in order to run 8088 MPH and Area 5150 cycle-perfect in the <a href="https://github.com/dbalsom/XTCE-Blue">XTCE-Blue emulator</a>, we know that it&rsquo;s not quite that way.  Internally, the 8086 and 8088 use, essentially, <a href="https://www.righto.com/2023/04/reverse-engineering-8086-divide-microcode.html">long division</a> with a series of subtracts.  As a side effect of this, in most cases the zero flag is set as you&rsquo;d expect with respect to the quotient of the DIV or IDIV instruction: set if the quotient is zero, cleared if not.</p>
+<p>So what&rsquo;s meant to happen is that you get a non-zero quotient (because you always will given constraints on the inputs here), the zero flag is cleared, the JNZ is taken, and <a href="https://www.youtube.com/watch?v=blLbiFYYQzo">everything works fine</a>, plus or minus.</p>
+  </div>
+  <footer class="post-meta">Posted by Arbee in <a href="/tags/general/">General</a> @ 3:51 pm</footer>
+</article>
+<nav class="pager post-pager"><a class="older-post" href="/2026/01/01/dropping-the-ball-on-2025-my-mame-year-in-review/">&larr; Dropping the ball on 2025, my MAME year-in-review</a> <a class="newer-post" href="/2026/06/16/i-need-your-clothes-your-boots-and-your-motorcycle/">I need your clothes, your boots, and your motorcycle &rarr;</a></nav>
+  </main>
+  <aside class="sidebar">
+  <section>
+    <h2>Recent posts</h2>
+    <ul>
+    <li><a href="/2026/06/16/i-need-your-clothes-your-boots-and-your-motorcycle/">I need your clothes, your boots, and your motorcycle</a></li>
+    <li><a href="/2026/05/09/whats-a-little-undocumented-behavior-between-friends/">What’s a little undocumented behavior between friends?</a></li>
+    <li><a href="/2026/01/01/dropping-the-ball-on-2025-my-mame-year-in-review/">Dropping the ball on 2025, my MAME year-in-review</a></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Archives</h2>
+    <ul>
+    <li><a href="/archive/#2026-06">June 2026</a> <span class="count">(1)</span></li>
+    <li><a href="/archive/#2026-05">May 2026</a> <span class="count">(1)</span></li>
+    <li><a href="/archive/#2026-01">January 2026</a> <span class="count">(1)</span></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Tags</h2>
+    <ul>
+    <li><a href="/tags/general/">General</a> <span class="count">(3)</span></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Links</h2>
+    <ul>
+    <li><a href="https://www.mamedev.org/">MAMEdev.org</a></li>
+    <li><a href="https://github.com/mamedev/mame">MAME on GitHub</a></li>
+    <li><a href="https://www.mametesters.org/">MAME Testers</a></li>
+    <li><a href="https://www.youtube.com/messdrivers">My YouTube channel</a></li>
+    <li><a href="https://web.archive.org/web/20260618104638/https://rbelmont.mameworld.info/">Old blog (Wayback Machine)</a></li>
+    <li><a href="https://mamedev.emulab.it/haze/">David Haywood (Haze)’s WIP</a></li>
+    <li><a href="http://rophon.music.coocan.jp/">ROP Music Laboratory</a></li>
+    <li><a href="https://disch.zophar.net/nsfe.php">Slick’s NSFE downloads</a></li>
+    <li><a href="http://www.snesmusic.org/v2/">SNESMusic</a></li>
+    <li><a href="https://www.system16.com/">System 16, the Arcade Museum</a></li>
+    <li><a href="https://modarchive.org/">The MOD Archive</a></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Subscribe</h2>
+    <ul>
+    <li><a href="/feed.xml">Atom feed</a></li>
+    </ul>
+  </section>
+  </aside>
+</div>
+<footer class="site-footer">
+  <p>&copy; 2026 Arbee &middot; <a href="/feed.xml">Atom feed</a> &middot; <a href="/archive/">Archive</a></p>
+</footer>
+</body>
+</html>

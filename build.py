@@ -75,7 +75,8 @@ def esc_text(text: str) -> str:
 
 
 def slugify(text: str) -> str:
-    text = re.sub(r"[^a-z0-9]+", "-", text.lower())
+    text = re.sub(r"['\u2019]", "", text.lower())  # "What's" -> "whats", not "what-s"
+    text = re.sub(r"[^a-z0-9]+", "-", text)
     return text.strip("-") or "post"
 
 
@@ -140,6 +141,8 @@ def read_post(path: Path, md: markdown.Markdown, tz: ZoneInfo) -> Post:
     title = meta.get("title", "").strip()
     if not title:
         raise BuildError(f"{path.name}: missing 'title:' in front matter")
+    md.reset()
+    title = strip_tags(md.convert(title)).strip()  # same curly quotes and dashes as the post text
 
     name_match = FILENAME_RE.match(path.stem)
     if "date" in meta:
