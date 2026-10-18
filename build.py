@@ -71,7 +71,7 @@ def esc(text: str) -> str:
 
 def esc_text(text: str) -> str:
     """Escape plain config text (titles, link names) with typographic apostrophes."""
-    return esc(re.sub(r"(?<=\w)'", "\u2019", text))
+    return esc(re.sub(r"(?<=\S)'", "\u2019", text))
 
 
 def slugify(text: str) -> str:
