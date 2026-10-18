@@ -5,8 +5,30 @@
   <link href="https://rb6502.github.io/feed.xml" rel="self"/>
   <link href="https://rb6502.github.io/"/>
   <id>https://rb6502.github.io/</id>
-  <updated>2026-06-16T12:53:00-04:00</updated>
+  <updated>2026-07-03T18:46:00-04:00</updated>
   <author><name>Arbee</name></author>
+  <entry>
+    <title>MAMEception</title>
+    <link href="https://rb6502.github.io/2026/07/03/mameception/"/>
+    <id>https://rb6502.github.io/2026/07/03/mameception/</id>
+    <published>2026-07-03T18:46:00-04:00</published>
+    <updated>2026-07-03T18:46:00-04:00</updated>
+    <category term="General"/>
+    <content type="html">&lt;p&gt;The old MacMAME runs Pacman full speed with sound on the Power Macintosh 6100/60 driver now.  &lt;a href=&quot;https://www.youtube.com/watch?v=N0kpWXno7rk&quot;&gt;Check it out!&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <title>Machines may calculate, but only humans can dream</title>
+    <link href="https://rb6502.github.io/2026/06/23/machines-may-calculate-but-only-humans-can-dream/"/>
+    <id>https://rb6502.github.io/2026/06/23/machines-may-calculate-but-only-humans-can-dream/</id>
+    <published>2026-06-23T11:31:00-04:00</published>
+    <updated>2026-06-23T11:31:00-04:00</updated>
+    <category term="General"/>
+    <content type="html">&lt;p&gt;Yeah, I&amp;rsquo;m gonna keep going with the Terminator 2 quotes.  MAME now has &lt;a href=&quot;https://docs.mamedev.org/contributing/index.html&quot;&gt;an AI policy for contributors&lt;/a&gt;.  It&amp;rsquo;s basically what I said in my previous post, but stated more formally.  But you&amp;rsquo;re not here for that, you&amp;rsquo;re here to hear more about the Power Macintosh emulation, so let&amp;rsquo;s get started.&lt;/p&gt;
+&lt;p&gt;First up, since the last burst of activity on the pmac6100, the boot chime has played perfectly but sound in Mac OS was scratchy.  I assumed for a long time it was due to PowerPC math issues when emulating the software mixer in Mac OS, but nothing improved with the mass of improvements to the PowerPC core.  After accepting that my initial theory was wrong I aimed Claude at the audio output emulation, not expecting much.  It came back and told me I was misreporting which half of the audio double buffer was currently active, causing newly mixed data to be written to the buffer half currently being played rather than the other half.  I fixed that and got &lt;a href=&quot;https://www.youtube.com/watch?v=HER2kgNmZIA&amp;amp;t=30s&quot;&gt;perfect clear sound&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Secondly, no version of Mac OS beyond 7.5.5 would boot.  They&amp;rsquo;d act like there was no enabler for the machine.  I dug into that with Claude assisting and found that the reason was a bit weird: the ROM for the 6100/7100/8100 sets the machine type by a combination of the system ID register and the measured CPU clock speed (!)  It was measuring using the PowerPC&amp;rsquo;s &amp;lsquo;decrementer&amp;rsquo;, basically a free-running timer that can optionally generate interrupts.  The problem?  The PowerPC 601&amp;rsquo;s decrementer didn&amp;rsquo;t work like it does on other PowerPC chips.  It measures nanoseconds rather than clock cycles.  Implementing it to start counting immediately got the measured clocks in place and the ROM dutifully set the machine ID to &amp;ldquo;Power Macintosh 6100/60&amp;rdquo;, which is exactly what we wanted.&lt;/p&gt;
+&lt;p&gt;With the machine type correct, System 7.1.2P showed the proper machine type in the Finder&amp;rsquo;s About box.  Systems 7.6 and 8.0 booted, and the 8.5 install CD would boot to Finder but randomly bomb out early in the install process.  And 8.1 would boot to Finder but freeze right as the desktop appeared.  A bit of tracing revealed all of these symptoms were due to memory at the very top of RAM getting corrupted.  I eventually realized that was due to the RAM mapping not being exactly right (I was mirroring the wrong banks to the wrong places).  I fixed that, with some help from a commented disassembly I made of the boot ROM&amp;rsquo;s memory sizing code, and all of those problems went away.  8.1 now runs perfectly (and much faster than on 68K machines) and with a small fix to the serial DMA register so the AppleTalk check doesn&amp;rsquo;t hang 8.5 and 8.6 also boot to Finder and run normally.&lt;/p&gt;
+&lt;p&gt;The final frontier is Mac OS 9, the last version before the whole code base was famously given a funeral by Steve Jobs.  It boots to the initial &amp;ldquo;Mac OS 9&amp;rdquo; splash and then gets hung up trying to talk to a device that doesn&amp;rsquo;t exist, apparently SCSI of some kind.  Stay tuned&amp;hellip;&lt;/p&gt;</content>
+  </entry>
   <entry>
     <title>I need your clothes, your boots, and your motorcycle</title>
     <link href="https://rb6502.github.io/2026/06/16/i-need-your-clothes-your-boots-and-your-motorcycle/"/>

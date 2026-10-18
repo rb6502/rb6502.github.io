@@ -23,6 +23,32 @@
   <main class="main">
 <article class="post">
   <header class="post-header">
+    <p class="post-date"><time datetime="2026-07-03T18:46:00-04:00">July 3, 2026</time></p>
+    <h2 class="post-title"><a href="/2026/07/03/mameception/">MAMEception</a></h2>
+  </header>
+  <div class="post-body">
+<p>The old MacMAME runs Pacman full speed with sound on the Power Macintosh 6100/60 driver now.  <a href="https://www.youtube.com/watch?v=N0kpWXno7rk">Check it out!</a></p>
+  </div>
+  <footer class="post-meta">Posted by Arbee in <a href="/tags/general/">General</a> @ 6:46 pm &middot; <a href="/2026/07/03/mameception/">Permalink</a></footer>
+</article>
+
+<article class="post">
+  <header class="post-header">
+    <p class="post-date"><time datetime="2026-06-23T11:31:00-04:00">June 23, 2026</time></p>
+    <h2 class="post-title"><a href="/2026/06/23/machines-may-calculate-but-only-humans-can-dream/">Machines may calculate, but only humans can dream</a></h2>
+  </header>
+  <div class="post-body">
+<p>Yeah, I&rsquo;m gonna keep going with the Terminator 2 quotes.  MAME now has <a href="https://docs.mamedev.org/contributing/index.html">an AI policy for contributors</a>.  It&rsquo;s basically what I said in my previous post, but stated more formally.  But you&rsquo;re not here for that, you&rsquo;re here to hear more about the Power Macintosh emulation, so let&rsquo;s get started.</p>
+<p>First up, since the last burst of activity on the pmac6100, the boot chime has played perfectly but sound in Mac OS was scratchy.  I assumed for a long time it was due to PowerPC math issues when emulating the software mixer in Mac OS, but nothing improved with the mass of improvements to the PowerPC core.  After accepting that my initial theory was wrong I aimed Claude at the audio output emulation, not expecting much.  It came back and told me I was misreporting which half of the audio double buffer was currently active, causing newly mixed data to be written to the buffer half currently being played rather than the other half.  I fixed that and got <a href="https://www.youtube.com/watch?v=HER2kgNmZIA&amp;t=30s">perfect clear sound</a>.</p>
+<p>Secondly, no version of Mac OS beyond 7.5.5 would boot.  They&rsquo;d act like there was no enabler for the machine.  I dug into that with Claude assisting and found that the reason was a bit weird: the ROM for the 6100/7100/8100 sets the machine type by a combination of the system ID register and the measured CPU clock speed (!)  It was measuring using the PowerPC&rsquo;s &lsquo;decrementer&rsquo;, basically a free-running timer that can optionally generate interrupts.  The problem?  The PowerPC 601&rsquo;s decrementer didn&rsquo;t work like it does on other PowerPC chips.  It measures nanoseconds rather than clock cycles.  Implementing it to start counting immediately got the measured clocks in place and the ROM dutifully set the machine ID to &ldquo;Power Macintosh 6100/60&rdquo;, which is exactly what we wanted.</p>
+<p>With the machine type correct, System 7.1.2P showed the proper machine type in the Finder&rsquo;s About box.  Systems 7.6 and 8.0 booted, and the 8.5 install CD would boot to Finder but randomly bomb out early in the install process.  And 8.1 would boot to Finder but freeze right as the desktop appeared.  A bit of tracing revealed all of these symptoms were due to memory at the very top of RAM getting corrupted.  I eventually realized that was due to the RAM mapping not being exactly right (I was mirroring the wrong banks to the wrong places).  I fixed that, with some help from a commented disassembly I made of the boot ROM&rsquo;s memory sizing code, and all of those problems went away.  8.1 now runs perfectly (and much faster than on 68K machines) and with a small fix to the serial DMA register so the AppleTalk check doesn&rsquo;t hang 8.5 and 8.6 also boot to Finder and run normally.</p>
+<p>The final frontier is Mac OS 9, the last version before the whole code base was famously given a funeral by Steve Jobs.  It boots to the initial &ldquo;Mac OS 9&rdquo; splash and then gets hung up trying to talk to a device that doesn&rsquo;t exist, apparently SCSI of some kind.  Stay tuned&hellip;</p>
+  </div>
+  <footer class="post-meta">Posted by Arbee in <a href="/tags/general/">General</a> @ 11:31 am &middot; <a href="/2026/06/23/machines-may-calculate-but-only-humans-can-dream/">Permalink</a></footer>
+</article>
+
+<article class="post">
+  <header class="post-header">
     <p class="post-date"><time datetime="2026-06-16T12:53:00-04:00">June 16, 2026</time></p>
     <h2 class="post-title"><a href="/2026/06/16/i-need-your-clothes-your-boots-and-your-motorcycle/">I need your clothes, your boots, and your motorcycle</a></h2>
   </header>
@@ -100,6 +126,8 @@ seg000:5665                 mov     bx, ax
   <section>
     <h2>Recent posts</h2>
     <ul>
+    <li><a href="/2026/07/03/mameception/">MAMEception</a></li>
+    <li><a href="/2026/06/23/machines-may-calculate-but-only-humans-can-dream/">Machines may calculate, but only humans can dream</a></li>
     <li><a href="/2026/06/16/i-need-your-clothes-your-boots-and-your-motorcycle/">I need your clothes, your boots, and your motorcycle</a></li>
     <li><a href="/2026/05/09/whats-a-little-undocumented-behavior-between-friends/">What’s a little undocumented behavior between friends?</a></li>
     <li><a href="/2026/01/01/dropping-the-ball-on-2025-my-mame-year-in-review/">Dropping the ball on 2025, my MAME year-in-review</a></li>
@@ -108,7 +136,8 @@ seg000:5665                 mov     bx, ax
   <section>
     <h2>Archives</h2>
     <ul>
-    <li><a href="/archive/#2026-06">June 2026</a> <span class="count">(1)</span></li>
+    <li><a href="/archive/#2026-07">July 2026</a> <span class="count">(1)</span></li>
+    <li><a href="/archive/#2026-06">June 2026</a> <span class="count">(2)</span></li>
     <li><a href="/archive/#2026-05">May 2026</a> <span class="count">(1)</span></li>
     <li><a href="/archive/#2026-01">January 2026</a> <span class="count">(1)</span></li>
     </ul>
@@ -116,7 +145,7 @@ seg000:5665                 mov     bx, ax
   <section>
     <h2>Tags</h2>
     <ul>
-    <li><a href="/tags/general/">General</a> <span class="count">(3)</span></li>
+    <li><a href="/tags/general/">General</a> <span class="count">(5)</span></li>
     </ul>
   </section>
   <section>

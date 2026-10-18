@@ -1,0 +1,15 @@
+---
+title: Machines may calculate, but only humans can dream
+date: 2026-06-23 11:31
+tags: General
+---
+
+Yeah, I'm gonna keep going with the Terminator 2 quotes.  MAME now has [an AI policy for contributors](https://docs.mamedev.org/contributing/index.html).  It's basically what I said in my previous post, but stated more formally.  But you're not here for that, you're here to hear more about the Power Macintosh emulation, so let's get started.
+
+First up, since the last burst of activity on the pmac6100, the boot chime has played perfectly but sound in Mac OS was scratchy.  I assumed for a long time it was due to PowerPC math issues when emulating the software mixer in Mac OS, but nothing improved with the mass of improvements to the PowerPC core.  After accepting that my initial theory was wrong I aimed Claude at the audio output emulation, not expecting much.  It came back and told me I was misreporting which half of the audio double buffer was currently active, causing newly mixed data to be written to the buffer half currently being played rather than the other half.  I fixed that and got [perfect clear sound](https://www.youtube.com/watch?v=HER2kgNmZIA&t=30s).
+
+Secondly, no version of Mac OS beyond 7.5.5 would boot.  They'd act like there was no enabler for the machine.  I dug into that with Claude assisting and found that the reason was a bit weird: the ROM for the 6100/7100/8100 sets the machine type by a combination of the system ID register and the measured CPU clock speed (!)  It was measuring using the PowerPC's 'decrementer', basically a free-running timer that can optionally generate interrupts.  The problem?  The PowerPC 601's decrementer didn't work like it does on other PowerPC chips.  It measures nanoseconds rather than clock cycles.  Implementing it to start counting immediately got the measured clocks in place and the ROM dutifully set the machine ID to "Power Macintosh 6100/60", which is exactly what we wanted.
+
+With the machine type correct, System 7.1.2P showed the proper machine type in the Finder's About box.  Systems 7.6 and 8.0 booted, and the 8.5 install CD would boot to Finder but randomly bomb out early in the install process.  And 8.1 would boot to Finder but freeze right as the desktop appeared.  A bit of tracing revealed all of these symptoms were due to memory at the very top of RAM getting corrupted.  I eventually realized that was due to the RAM mapping not being exactly right (I was mirroring the wrong banks to the wrong places).  I fixed that, with some help from a commented disassembly I made of the boot ROM's memory sizing code, and all of those problems went away.  8.1 now runs perfectly (and much faster than on 68K machines) and with a small fix to the serial DMA register so the AppleTalk check doesn't hang 8.5 and 8.6 also boot to Finder and run normally.
+
+The final frontier is Mac OS 9, the last version before the whole code base was famously given a funeral by Steve Jobs.  It boots to the initial "Mac OS 9" splash and then gets hung up trying to talk to a device that doesn't exist, apparently SCSI of some kind.  Stay tuned...
